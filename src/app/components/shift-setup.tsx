@@ -27,6 +27,7 @@ export interface ShiftSetupData {
   };
   printer: {
     startCounter: string;
+    sealedPackages: number;
   };
   shelves: {
     album3: number;
@@ -61,6 +62,7 @@ export function ShiftSetup({ userName, userRole, projectName, onComplete, onLogo
 
   // Yazıcı state
   const [printerStart, setPrinterStart] = useState('');
+  const [sealedPackages, setSealedPackages] = useState(0);
 
   // Reyon state
   const [shelfAlbums, setShelfAlbums] = useState({
@@ -106,7 +108,7 @@ export function ShiftSetup({ userName, userRole, projectName, onComplete, onLogo
   const handleComplete = () => {
     const setupData: ShiftSetupData = {
       stock,
-      printer: { startCounter: printerStart },
+      printer: { startCounter: printerStart, sealedPackages },
       shelves: shelfAlbums,
       teamPhoto: { taken: teamPhotoTaken, preview: teamPhotoPreview },
     };
@@ -176,51 +178,93 @@ export function ShiftSetup({ userName, userRole, projectName, onComplete, onLogo
     </motion.div>
   );
 
-  const renderPrinterStep = () => (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="space-y-4"
-    >
-      <div className="backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ffd4a3] to-[#ffc78f] flex items-center justify-center shadow-lg">
-            <Printer className="w-6 h-6 text-[#744210]" />
-          </div>
-          <div>
-            <h3 className="font-bold text-white">Baskı Cihazı</h3>
-            <p className="text-xs text-gray-400">Sayaç başlangıç değerini girin</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-white mb-2">
-              Başlangıç Sayacı
-            </label>
-            <input
-              type="number"
-              value={printerStart}
-              onChange={(e) => setPrinterStart(e.target.value)}
-              placeholder="100"
-              className="w-full px-4 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ffd4a3]/50 focus:border-[#ffd4a3]/50 transition-all text-lg font-bold text-center"
-            />
+  const renderPrinterStep = () => {
+    const totalPrints = parseInt(printerStart || '0') + (sealedPackages * 400);
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="space-y-4"
+      >
+        <div className="backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ffd4a3] to-[#ffc78f] flex items-center justify-center shadow-lg">
+              <Printer className="w-6 h-6 text-[#744210]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white">Baskı Cihazı</h3>
+              <p className="text-xs text-gray-400">Sayaç başlangıç değerini girin</p>
+            </div>
           </div>
 
-          <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">💡</div>
-              <div className="text-xs text-gray-400">
-                <p className="font-semibold text-white mb-1">Not:</p>
-                Yazıcının LCD ekranında görünen toplam baskı sayısını girin. 
-                Vardiya sonunda tekrar bu değeri girmeniz istenecek.
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Başlangıç Sayacı
+                </label>
+                <input
+                  type="number"
+                  value={printerStart}
+                  onChange={(e) => setPrinterStart(e.target.value)}
+                  placeholder="100"
+                  className="w-full px-4 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ffd4a3]/50 focus:border-[#ffd4a3]/50 transition-all text-lg font-bold text-center"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">
+                  Kapalı Paket
+                </label>
+                <input
+                  type="number"
+                  value={sealedPackages}
+                  onChange={(e) => setSealedPackages(parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                  className="w-full px-4 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ffd4a3]/50 focus:border-[#ffd4a3]/50 transition-all text-lg font-bold text-center"
+                />
+              </div>
+            </div>
+
+            {/* Toplam Hesaplama */}
+            {(printerStart || sealedPackages > 0) && (
+              <div className="bg-gradient-to-br from-[#a8e6cf]/20 to-[#8dd9b8]/20 border border-[#a8e6cf]/30 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-300">Toplam Baskı Hesabı:</span>
+                </div>
+                <div className="space-y-1 text-xs text-gray-400 mb-3">
+                  <div className="flex justify-between">
+                    <span>Cihazda:</span>
+                    <span className="font-semibold text-white">{printerStart || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Kapalı Paket ({sealedPackages} × 400):</span>
+                    <span className="font-semibold text-white">{sealedPackages * 400}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <span className="text-sm font-bold text-white">Toplam:</span>
+                  <span className="text-2xl font-black text-[#a8e6cf]">{totalPrints}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">💡</div>
+                <div className="text-xs text-gray-400">
+                  <p className="font-semibold text-white mb-1">Not:</p>
+                  Yazıcının LCD ekranında görünen toplam baskı sayısını girin. 
+                  Kapalı paket sayısı ile birlikte toplam baskı hesaplanacaktır. (1 paket = 400 baskı)
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   const renderShelfStep = () => (
     <motion.div

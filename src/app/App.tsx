@@ -128,7 +128,7 @@ export default function App() {
     setSelectedProject("");
   };
 
-  const handleNavigate = (tab: string) => {
+    const handleNavigate = (tab: string) => {
     setShowCurrentStock(false);
     setShowShiftSetup(false);
     setShowShiftEnd(false);
@@ -142,17 +142,88 @@ export default function App() {
     }
   };
 
+  // ✅ Types
+  type StockRequestStatus = "pending" | "approved" | "rejected";
+  type StockRemovalItem = { key: string; label: string; amount: number };
+
+  type PendingStockRequest = {
+    id: string;
+    items: StockRemovalItem[];
+    timestamp: Date;
+    status: StockRequestStatus;
+  };
+
+  type PendingPrinterRequest = {
+    id: string;
+    amount: number;
+    timestamp: Date;
+    status: StockRequestStatus;
+  };
+
+  // ✅ State (typed)
+  const [pendingStockRequests, setPendingStockRequests] = useState<PendingStockRequest[]>([]);
+  const [pendingPrinterRequests, setPendingPrinterRequests] = useState<PendingPrinterRequest[]>([]);
+
+  // ✅ Basit ID generator (crypto bazen kırıyor)
+  const makeId = () => `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  const onRequestStockRemoval = (items: StockRemovalItem[]) => {
+    const id = makeId();
+
+    setPendingStockRequests((prev) => [
+      {
+        id,
+        items,
+        timestamp: new Date(),
+        status: "pending",
+      },
+      ...prev,
+    ]);
+
+    return id;
+  };
+
+  const onRequestPrinterRemoval = (amount: number) => {
+    const id = makeId();
+
+    setPendingPrinterRequests((prev) => [
+      {
+        id,
+        amount,
+        timestamp: new Date(),
+        status: "pending",
+      },
+      ...prev,
+    ]);
+
+    return id;
+  };
+
+  const onCancelStockRequest = (requestId: string) => {
+    setPendingStockRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
+  const onCancelPrinterRequest = (requestId: string) => {
+    setPendingPrinterRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
   const renderContent = () => {
     if (userRole === "staff" && selectedProject && showCurrentStock) {
       return (
-        <CurrentStock
-          userName={userName}
-          userRole={userRole}
-          projectName={selectedProject}
-          onBack={handleBackFromStock}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-        />
+<CurrentStock
+  userName={userName}
+  userRole={userRole}
+  projectName={selectedProject}
+  onBack={handleBackFromStock}
+  onLogout={handleLogout}
+  onNavigate={handleNavigate}
+  onRequestStockRemoval={onRequestStockRemoval}
+  onRequestPrinterRemoval={onRequestPrinterRemoval}
+  onCancelStockRequest={onCancelStockRequest}
+  onCancelPrinterRequest={onCancelPrinterRequest}
+  pendingStockRequests={pendingStockRequests}
+  pendingPrinterRequests={pendingPrinterRequests}
+/>
       );
     }
 
