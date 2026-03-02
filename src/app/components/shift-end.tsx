@@ -15,12 +15,16 @@ interface ShiftEndProps {
 
 export function ShiftEnd({ userName, userRole, projectName, onBack, onLogout, onNavigate }: ShiftEndProps) {
   const [ribbonChanges, setRibbonChanges] = useState(0);
-  const [ribbonEndCount, setRibbonEndCount] = useState(0);
+  const [tempRibbonCount, setTempRibbonCount] = useState(0);
   const [showRibbonNotification, setShowRibbonNotification] = useState(false);
   const [showClosingCount, setShowClosingCount] = useState(false);
   const [showShiftEndSuccess, setShowShiftEndSuccess] = useState(false);
   const [venuePhotoTaken, setVenuePhotoTaken] = useState(false);
   const [venuePhotoPreview, setVenuePhotoPreview] = useState<string | null>(null);
+
+  // Ribon/Baskı sayacı state (aynı şey)
+  const [printerEndCounter, setPrinterEndCounter] = useState('');
+  const [sealedPackagesEnd, setSealedPackagesEnd] = useState(0);
 
   // Kapanış sayımı state
   const [closingCount, setClosingCount] = useState({
@@ -31,6 +35,7 @@ export function ShiftEnd({ userName, userRole, projectName, onBack, onLogout, on
       album9: 0,
       album11: 0,
       album15: 0,
+      passepartout: 0,
     },
     damagedAlbums: {
       album3: 0,
@@ -44,11 +49,22 @@ export function ShiftEnd({ userName, userRole, projectName, onBack, onLogout, on
 
   const handleRibbonChange = () => {
     setRibbonChanges(prev => prev + 1);
-    setRibbonEndCount(prev => prev + 1);
+    setTempRibbonCount(prev => prev + 1);
     setShowRibbonNotification(true);
     setTimeout(() => {
       setShowRibbonNotification(false);
     }, 2000);
+  };
+
+  const handleRibbonSubmit = () => {
+    if (tempRibbonCount > 0) {
+      setRibbonChanges(prev => prev + tempRibbonCount);
+      setTempRibbonCount(0);
+      setShowRibbonNotification(true);
+      setTimeout(() => {
+        setShowRibbonNotification(false);
+      }, 2000);
+    }
   };
 
   const updateClosingCount = (category: 'shelfEnd' | 'damagedAlbums', key: string, value: number) => {
@@ -173,41 +189,129 @@ export function ShiftEnd({ userName, userRole, projectName, onBack, onLogout, on
                 </div>
               </div>
               
-              <button
-                onClick={handleRibbonChange}
-                className="w-full bg-gradient-to-br from-[#9dd9ea] to-[#7ec8dd] text-[#2d3748] rounded-xl py-3 px-4 font-bold shadow-lg hover:shadow-xl transition-all active:scale-95"
-              >
-                Ribon Değiştirildi
-              </button>
+              {/* Counter Display */}
+              <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-6 mb-4">
+                <div className="text-center mb-4">
+                  <div className="text-5xl font-black text-white mb-2">
+                    {tempRibbonCount}
+                  </div>
+                  <div className="text-xs text-gray-400">Ribon değişim sayısı</div>
+                </div>
+
+                {/* Plus and Minus Buttons */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <button
+                    onClick={() => setTempRibbonCount(Math.max(0, tempRibbonCount - 1))}
+                    className="bg-gradient-to-br from-[#ffb3ba] to-[#ff9ba3] text-white rounded-xl py-4 px-4 font-bold shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <span className="text-2xl">−</span>
+                  </button>
+                  <button
+                    onClick={() => setTempRibbonCount(tempRibbonCount + 1)}
+                    className="bg-gradient-to-br from-[#a8e6cf] to-[#8dd9b8] text-[#2d3748] rounded-xl py-4 px-4 font-bold shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <span className="text-2xl">+</span>
+                  </button>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleRibbonSubmit}
+                  disabled={tempRibbonCount === 0}
+                  className={`w-full rounded-xl py-3 px-4 font-bold shadow-lg transition-all ${
+                    tempRibbonCount > 0
+                      ? 'bg-gradient-to-br from-[#9dd9ea] to-[#7ec8dd] text-[#2d3748] hover:shadow-xl active:scale-95'
+                      : 'bg-white/10 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Gönder
+                </button>
+              </div>
             </div>
           </motion.div>
 
-          {/* Ribbon End Count */}
+          {/* Printer End Counter */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
+            transition={{ delay: 0.075 }}
             className="mb-6"
           >
             <div className="backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#a8e6cf] to-[#8dd9b8] flex items-center justify-center shadow-lg">
-                  <Film className="w-6 h-6 text-[#2d3748]" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ffd4a3] to-[#ffc78f] flex items-center justify-center shadow-lg">
+                  <Printer className="w-6 h-6 text-[#744210]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white">Ribon Bitiş Sayısı</h3>
-                  <p className="text-xs text-gray-400">Kalan ribon adedi</p>
+                  <h3 className="font-bold text-white">Baskı Sayacı Bitiş</h3>
+                  <p className="text-xs text-gray-400">Bitiş sayacı ve kapalı paket</p>
                 </div>
               </div>
-              
-              <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-                <input
-                  type="number"
-                  value={ribbonEndCount || ''}
-                  onChange={(e) => setRibbonEndCount(parseInt(e.target.value) || 0)}
-                  placeholder="Ribon sayısını girin"
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#a8e6cf]/50 focus:border-[#a8e6cf]/50 transition-all text-center font-bold text-xl"
-                />
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Bitiş Sayacı
+                    </label>
+                    <input
+                      type="number"
+                      value={printerEndCounter}
+                      onChange={(e) => setPrinterEndCounter(e.target.value)}
+                      placeholder="300"
+                      className="w-full px-4 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ffd4a3]/50 focus:border-[#ffd4a3]/50 transition-all text-lg font-bold text-center"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Kapalı Paket
+                    </label>
+                    <input
+                      type="number"
+                      value={sealedPackagesEnd}
+                      onChange={(e) => setSealedPackagesEnd(parseInt(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full px-4 py-4 bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ffd4a3]/50 focus:border-[#ffd4a3]/50 transition-all text-lg font-bold text-center"
+                    />
+                  </div>
+                </div>
+
+                {/* Toplam Hesaplama */}
+                {(printerEndCounter || sealedPackagesEnd > 0) && (
+                  <div className="bg-gradient-to-br from-[#a8e6cf]/20 to-[#8dd9b8]/20 border border-[#a8e6cf]/30 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-300">Toplam Baskı Hesabı:</span>
+                    </div>
+                    <div className="space-y-1 text-xs text-gray-400 mb-3">
+                      <div className="flex justify-between">
+                        <span>Cihazda:</span>
+                        <span className="font-semibold text-white">{printerEndCounter || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Kapalı Paket ({sealedPackagesEnd} × 400):</span>
+                        <span className="font-semibold text-white">{sealedPackagesEnd * 400}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <span className="text-sm font-bold text-white">Toplam:</span>
+                      <span className="text-2xl font-black text-[#a8e6cf]">
+                        {parseInt(printerEndCounter || '0') + (sealedPackagesEnd * 400)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div className="text-xs text-gray-400">
+                      <p className="font-semibold text-white mb-1">Not:</p>
+                      Yazıcının LCD ekranında görünen bitiş baskı sayısını girin. 
+                      Kapalı paket sayısı ile birlikte toplam baskı hesaplanacaktır. (1 paket = 400 baskı)
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -267,6 +371,7 @@ export function ShiftEnd({ userName, userRole, projectName, onBack, onLogout, on
                     { key: 'album9', label: '9 Kare Album', emoji: '📕' },
                     { key: 'album11', label: '11 Kare Album', emoji: '📔' },
                     { key: 'album15', label: '15 Kare Album', emoji: '📒' },
+                    { key: 'passepartout', label: 'Paspartu', emoji: '🖼️' },
                   ].map(({ key, label, emoji }) => (
                     <div key={key} className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-3">
                       <div className="text-2xl text-center mb-2">{emoji}</div>
